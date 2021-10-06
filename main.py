@@ -1,6 +1,57 @@
+"""
+Reads an athlete_events.csv file, validates the content removing invalid characters
+and ingests the data into SQLite3 database for further analysis.
+"""
+
 from typing import Dict, Iterator, Set
 from itertools import tee
 import csv
+import re
+
+
+def parse_athletes(csv_reader: Iterator) -> Dict[str, dict]:
+    """Parses athletes data, validates and changes data in case it's corrupted."""
+    all_athletes = {}
+    for row in csv_reader:
+        raw_name = row.get('Name')
+        name_no_brackets = re.sub(
+            r'\([^()]*\)', '', raw_name.strip()
+        )  # Remove part inside brackets
+        validated_name = re.sub(
+            r' "[^()]*"', '', name_no_brackets
+        ).strip()  # Removing double quote marks
+        sex = row.get('Sex')
+
+        if sex not in ['M', 'F']:
+            sex = None
+
+        if row.get('Year') != 'NA' and row.get('Age') != 'NA':
+            year_of_birth = int(row.get('Year')) - int(row.get('Age'))
+        else:
+            year_of_birth = None
+
+        if row.get('Height') == 'NA' and row.get('Weight') != 'NA':
+            parameters = {'weight': row.get('Weight')}
+        elif row.get('Height') != 'NA' and row.get('Weight') == 'NA':
+            parameters = {'height': row.get('Height')}
+        else:  # Both parameters are present
+            parameters = {
+                'height': row.get('Height'),
+                'weight': row.get('Weight'),
+            }
+
+        team_id = row.get('ID')
+
+        athlete = {
+            'name': validated_name,
+            'sex': sex,
+            'year_of_birth': year_of_birth,
+            'parameters': parameters,
+            'team_id': team_id,
+        }
+        all_athletes.update({validated_name: athlete})
+
+    return all_athletes
 
 
 def parse_teams(csv_reader: Iterator) -> Dict[str, str]:
@@ -56,14 +107,15 @@ def parse_events(csv_reader: Iterator) -> Set[str]:
 
 
 def read_data():
-    """Reads a .csv file in order for """
-    with open('src/athlete_events.csv') as source_file:
+    """Reads a .csv file in order for other functions to parse & prepare the data."""
+    with open('src/athlete_events.csv', encoding='utf-8') as source_file:
         csv_reader = csv.DictReader(source_file)
-        teams, games, sports, events, athletes = tee(csv_reader, 5)  # copying the file iterator into separate variables
+        teams, games, sports, events, athletes = tee(csv_reader, 5)
         parse_teams(teams)
         parse_sports(sports)
         parse_events(events)
         parse_games(games)
+        parse_athletes(athletes)
 
 
 if __name__ == '__main__':
