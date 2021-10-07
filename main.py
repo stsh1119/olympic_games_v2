@@ -13,15 +13,11 @@ def parse_athletes(csv_reader: Iterator) -> Dict[str, dict]:
     """Parses athletes data, validates and changes data in case it's corrupted."""
     all_athletes = {}
     for row in csv_reader:
-        raw_name = row.get('Name')
-        name_no_brackets = re.sub(
-            r'\([^()]*\)', '', raw_name.strip()
-        )  # Remove part inside brackets
-        validated_name = re.sub(
-            r' "[^()]*"', '', name_no_brackets
-        ).strip()  # Removing double quote marks
-        sex = row.get('Sex')
+        raw_name = row.get('Name')  # With parentheses, content inside and quote marks
+        name_no_brackets = re.sub(r'\([^()]*\)', '', raw_name.strip())
+        valid_name = re.sub(r' "[^()]*"', '', name_no_brackets).strip()
 
+        sex = row.get('Sex')
         if sex not in ['M', 'F']:
             sex = None
 
@@ -40,16 +36,17 @@ def parse_athletes(csv_reader: Iterator) -> Dict[str, dict]:
                 'weight': row.get('Weight'),
             }
 
-        team_id = row.get('ID')
+        athlete_id = row.get('ID')
+        team_id = ''  # TODO: Get team id from parsed data
 
         athlete = {
-            'name': validated_name,
+            'name': valid_name,
             'sex': sex,
             'year_of_birth': year_of_birth,
             'parameters': parameters,
-            'team_id': team_id,
+            'athlete_id': athlete_id,
         }
-        all_athletes.update({validated_name: athlete})
+        all_athletes.update({valid_name: athlete})
 
     return all_athletes
 
@@ -58,12 +55,12 @@ def parse_teams(csv_reader: Iterator) -> Dict[str, str]:
     """Reads and transforms team data from .csv file noc names and teams."""
     teams_data = {}
     for row in csv_reader:
-        team = row.get('Team')
-        noc_name = row.get('NOC')
-        if '-' in team:
-            dash_index = team.find('-')
-            team = team.replace(team[dash_index:], '')
-        teams_data.update({noc_name: team})
+        team_name = row.get('Team')
+        noc_name = row.get('NOC')  # 3-letter code for a team
+        if '-' in team_name:
+            dash_index = team_name.find('-')
+            team_name = team_name.replace(team_name[dash_index:], '')
+        teams_data.update({noc_name: team_name})
 
     return teams_data
 
