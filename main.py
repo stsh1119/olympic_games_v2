@@ -9,7 +9,7 @@ import csv
 import re
 
 
-# Unofficial game, that should not be added th stats
+# Unofficial game, that should not be added the stats
 UNOFFICIAL_GAME = '1906 Summer'
 
 # Constants for mapping records to integer values
