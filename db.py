@@ -13,9 +13,9 @@ EVENTS = 'events'
 RESULTS = 'results'
 
 
-def connect() -> sqlite3.Connection:
-    """Connects to a database."""
-    return sqlite3.connect('olympic_history.db')
+def connect(database: str) -> sqlite3.Connection:
+    """Connects to a given SQLIte3 database."""
+    return sqlite3.connect(database)
 
 
 def ingest_teams(teams_data: Dict[str, list], connection: sqlite3.Connection) -> None:
@@ -39,7 +39,7 @@ def ingest_games(games_data: Dict[str, list], connection: sqlite3.Connection) ->
         )
 
 
-def ingest_athletes(athletes_data: Dict[str, dict], connection) -> None:
+def ingest_athletes(athletes_data: Dict[str, dict], connection: sqlite3.Connection) -> None:
     """Ingests parsed data for athletes into a database."""
     cursor = connection.cursor()
     for athlete in athletes_data.values():
@@ -50,21 +50,21 @@ def ingest_athletes(athletes_data: Dict[str, dict], connection) -> None:
         )
 
 
-def ingest_sports(sports_data: Dict[str, int], connection) -> None:
+def ingest_sports(sports_data: Dict[str, int], connection: sqlite3.Connection) -> None:
     """Ingests parsed data for sports into a database."""
     cursor = connection.cursor()
     for sport, sport_id in sports_data.items():
         cursor.execute(f"insert into {SPORTS} values (?, ?)", (sport_id, sport))
 
 
-def ingest_events(events_data: Dict[str, int], connection) -> None:
+def ingest_events(events_data: Dict[str, int], connection: sqlite3.Connection) -> None:
     """Ingests parsed data for events into a database."""
     cursor = connection.cursor()
     for event, event_id in events_data.items():
         cursor.execute(f"insert into {EVENTS} values (?, ?)", (event_id, event))
 
 
-def ingest_results(results_data: List[tuple], connection) -> None:
+def ingest_results(results_data: List[tuple], connection: sqlite3.Connection) -> None:
     """Ingests parsed data for results into a database."""
     cursor = connection.cursor()
     for result in results_data:

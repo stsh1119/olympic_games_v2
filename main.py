@@ -9,9 +9,13 @@ import db
 import parsers
 
 
+FILE_PATH = 'src/athlete_events.csv'
+DATABASE = 'olympic_history.db'
+
+
 def load() -> None:
     """Reads a .csv, invokes other functions to parse and load the data into a DB."""
-    with open('src/athlete_events.csv', encoding='utf-8') as source_file:
+    with open(FILE_PATH, encoding='utf-8') as source_file:
         csv_reader = csv.DictReader(source_file)
         teams, games, sports, events, athletes, results = tee(csv_reader, 6)
         parsed_teams = parsers.parse_teams(teams)
@@ -22,7 +26,7 @@ def load() -> None:
         parsed_results = parsers.parse_results(
             results, parsed_games, parsed_sports, parsed_events
         )
-        with db.connect() as connection:
+        with db.connect(DATABASE) as connection:
             db.ingest_games(parsed_games, connection)
             db.ingest_teams(parsed_teams, connection)
             db.ingest_athletes(parsed_athletes, connection)
