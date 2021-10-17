@@ -11,38 +11,78 @@ CHART_TYPES = ('medals', 'top-teams')  # All available chart types
 
 # Constants for mapping records to integer values
 MEDALS = {
-    'NA': 0,
-    'Gold': 1,
-    'Silver': 2,
-    'Bronze': 3,
+    'na': 0,
+    'gold': 1,
+    'silver': 2,
+    'bronze': 3,
 }
-SEASONS = {'Winter': 1, 'Summer': 0}
+SEASONS = {'winter': 1, 'summer': 0}
 
 
-def sanitize_input():
-    """Parses & validates user input to make sure chart type is correct and needed params are present."""
-    user_input = sys.argv[1:]
-    chart_type, *params = user_input  # NOC name, season -> required, medal - Optional
-    print(chart_type, params)
-    if chart_type not in CHART_TYPES:
-        raise Exception("Incorrect chart type: try either 'medals' or 'top-teams'.")
-
-
-def get_medals_stats() -> List[tuple]:
+def _get_all_teams() -> List[str]:
+    """Gets NOC names of all teams present in the database."""
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
-        db_results = cursor.execute(
-            "select g.year, count(r.medal) as amount_of_medals "
-            "from results r, athletes a, teams t, games g "
-            "where r.athlete_id = a.id "
-            "and t.id = a.team_id "
-            "and g.id = r.game_id "
-            "and g.season = 0 "  # required
-            "and t.noc_name = 'USA' "  # required
-            # "and medal = 2 "  # optional
-            "group by g.year "
-            "order by g.year;"
-        ).fetchall()
+        teams = [team[0] for team in cursor.execute("select noc_name from teams").fetchall()]
+        return teams
+
+
+def sanitize_input() -> tuple:
+    """Parses & validates user input to make sure chart type is correct and needed params are present."""
+    user_input = sys.argv[1:]
+    if len(user_input) == 0:
+        raise ValueError('No arguments given, try giving some, available charts: medals/top-teams')
+    chart_type, *params = user_input
+    if chart_type == 'medals':
+        try:  # Checking whether given mandatory parameters are valid
+            season: int = [SEASONS.get(value.lower()) for value in params if value.lower() in SEASONS.keys()][0]
+            noc_name: str = [value.upper() for value in params if value.upper() in _get_all_teams()][0]
+            # Validating optional parameters
+            medal = [MEDALS.get(value) for value in params if value in MEDALS.keys()]
+            if medal:
+                return season, noc_name, medal[0]
+            return season, noc_name
+        except IndexError as index_missing:
+            raise Exception('Both NOC name and season parameters are required, medal is optional.') from index_missing
+
+    elif chart_type == 'top-teams':
+        pass
+    else:
+        raise Exception('Chart unavailable: try medals/top-teams.')
+
+
+def get_medals_stats(valid_input: tuple) -> List[tuple]:
+    """Given valid parameters, queries for data that will be used to build a chart."""
+    with sqlite3.connect(DATABASE) as conn:
+        cursor = conn.cursor()
+        print(valid_input)
+        if len(valid_input) == 3:
+            season, noc_name, medal = valid_input
+            db_results = cursor.execute(
+                "select g.year, count(r.medal) as amount_of_medals "
+                "from results r, athletes a, teams t, games g "
+                "where r.athlete_id = a.id "
+                "and t.id = a.team_id "
+                "and g.id = r.game_id "
+                "and g.season = ? "  # required
+                "and t.noc_name = ? "  # required
+                "and medal = ? "  # optional
+                "group by g.year "
+                "order by g.year", (season, noc_name, medal)
+            ).fetchall()
+        else:
+            season, noc_name = valid_input
+            db_results = cursor.execute(
+                "select g.year, count(r.medal) as amount_of_medals "
+                "from results r, athletes a, teams t, games g "
+                "where r.athlete_id = a.id "
+                "and t.id = a.team_id "
+                "and g.id = r.game_id "
+                "and g.season = ? "  # required
+                "and t.noc_name = ? "  # required
+                "group by g.year "
+                "order by g.year", (season, noc_name)
+            ).fetchall()
         return db_results
 
 
@@ -58,6 +98,9 @@ def build_chart(chart_data: List[tuple]) -> None:
 
 
 if __name__ == '__main__':
-    # params = sanitize_input()
-    medal_stats = get_medals_stats()
-    build_chart(medal_stats)
+    try:
+        parameters = sanitize_input()
+        medal_stats = get_medals_stats(parameters)
+        build_chart(medal_stats)
+    except Exception as e:
+        print(str(e))
