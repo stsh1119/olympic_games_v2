@@ -41,10 +41,10 @@ def sanitize_input() -> tuple:
     chart_type, *params = user_input
     if chart_type == 'medals':
         try:  # Checking whether given mandatory parameters are valid
-            season: int = [SEASONS.get(value.lower()) for value in params if value.lower() in SEASONS.keys()][0]
+            season: int = [SEASONS.get(value.lower()) for value in params if value.lower() in SEASONS][0]
             noc_name: str = [value.upper() for value in params if value.upper() in _get_all_teams()][0]
             # Validating optional parameters
-            medal = [MEDALS.get(value) for value in params if value in MEDALS.keys()]
+            medal = [MEDALS.get(value) for value in params if value in MEDALS]
             if medal:
                 return season, noc_name, medal[0]
             return season, noc_name
