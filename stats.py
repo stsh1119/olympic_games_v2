@@ -1,7 +1,9 @@
-import sys
+"""
+Module for parsing, validating user's input and then building charts in case given parameters are valid.
+"""
 import sqlite3
+import sys
 from typing import List
-
 
 BLOCK = '█'  # Character for building charts
 MAX_BAR_LENGTH = 200  # Maximum length of chart in rectangles(blocks)
@@ -20,7 +22,11 @@ SEASONS = {'winter': 1, 'summer': 0}
 
 
 def _get_all_teams() -> List[str]:
-    """Gets NOC names of all teams present in the database."""
+    """Gets NOC names of all teams present in the database.
+
+    Returns:
+        A list of team names, for example ['AFG', 'AHO', 'ALB', 'ALG',...].
+    """
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
         teams = [team[0] for team in cursor.execute("select noc_name from teams").fetchall()]
@@ -52,10 +58,13 @@ def sanitize_input() -> tuple:
 
 
 def get_medals_stats(valid_input: tuple) -> List[tuple]:
-    """Given valid parameters, queries for data that will be used to build a chart."""
+    """Given valid parameters, queries for data that will be used to build a chart.
+
+    Returns:
+        List of tuples, each containing year, amount of medals for that year, example [(1988, 1), (1992, 5),...]
+    """
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
-        print(valid_input)
         if len(valid_input) == 3:
             season, noc_name, medal = valid_input
             db_results = cursor.execute(
@@ -70,7 +79,7 @@ def get_medals_stats(valid_input: tuple) -> List[tuple]:
                 "group by g.year "
                 "order by g.year", (season, noc_name, medal)
             ).fetchall()
-        else:
+        else:  # medal is not specified
             season, noc_name = valid_input
             db_results = cursor.execute(
                 "select g.year, count(r.medal) as amount_of_medals "
