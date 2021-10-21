@@ -30,10 +30,17 @@ def _get_all_teams() -> List[str]:
         A list of team names, for example ['AFG', 'AHO', 'ALB', 'ALG',...].
     """
     with sqlite3.connect(DATABASE) as conn:
-        teams = [
-            team[0] for team in conn.execute("select noc_name from teams").fetchall()
-        ]
-        return teams
+        return [team[0] for team in conn.execute("select noc_name from teams").fetchall()]
+
+
+def _get_game_years() -> List[int]:
+    """Gets all years, when olympic games were conducted.
+
+    Returns:
+        A list of game years, for example [1992, 2012, 1920, 1900...].
+    """
+    with sqlite3.connect(DATABASE) as conn:
+        return [year[0] for year in conn.execute("select year from games").fetchall()]
 
 
 def sanitize_input() -> tuple:
