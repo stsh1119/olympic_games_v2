@@ -92,6 +92,32 @@ def get_medals_stats(valid_input: tuple) -> List[tuple]:
         return db_results
 
 
+def get_top_teams_stats(valid_input: tuple) -> List[tuple]:
+    """Given valid parameters, queries for data that will be used to build top-teams chart.
+
+        Returns:
+            List of tuples, each containing team, amount of medals for it, example [('AUS', 77), ('USA, 76),...]
+    """
+    with sqlite3.connect(DATABASE) as conn:
+        medal, season, year = valid_input
+        db_results = conn.execute("with amount_per_team as (select t.noc_name, count(medal) medals_amount "
+                                  "from teams t, results r, athletes a, games g "
+                                  "where t.id = a.team_id "
+                                  "and a.id = r.athlete_id "
+                                  "and g.id = r.game_id "
+                                  "and r.medal = ? "
+                                  "and g.season = ? "  # required
+                                  "and g.year = ? "
+                                  "group by t.noc_name "
+                                  "order by medals_amount desc) "
+                                  "select * "
+                                  "from amount_per_team "
+                                  "where medals_amount > (select avg(medals_amount) from amount_per_team)",
+                                  (medal, season, year)
+                                  ).fetchall()
+        return db_results
+
+
 def build_medals_chart(db_medal_stats: List[tuple]) -> None:
     """Determines a coefficient(k), so that chart is no longer than 200 blocks and
     builds a bar chart for a given data."""
