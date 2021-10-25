@@ -75,7 +75,6 @@ def get_medals_stats(valid_input: tuple) -> List[tuple]:
     """
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
-        medal = False if len(valid_input) == 2 else True  # checking if medal is specified
         db_results = cursor.execute(
             "select g.year, count(r.medal) as amount_of_medals "
             "from results r, athletes a, teams t, games g "
@@ -84,7 +83,7 @@ def get_medals_stats(valid_input: tuple) -> List[tuple]:
             "and g.id = r.game_id "
             "and g.season = ? "  # required
             "and t.noc_name = ? "  # required
-            f"{'and medal = ? ' if medal else ''}"  # optional
+            f"{'and medal = ? ' if len(valid_input) == 3 else ''}"  # checking if medal is specified
             "group by g.year "
             "order by g.year",
             valid_input,
