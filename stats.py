@@ -75,35 +75,21 @@ def get_medals_stats(valid_input: tuple) -> List[tuple]:
     """
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
-        if len(valid_input) == 3:
-            season, noc_name, medal = valid_input
-            db_results = cursor.execute(
-                "select g.year, count(r.medal) as amount_of_medals "
-                "from results r, athletes a, teams t, games g "
-                "where r.athlete_id = a.id "
-                "and t.id = a.team_id "
-                "and g.id = r.game_id "
-                "and g.season = ? "  # required
-                "and t.noc_name = ? "  # required
-                "and medal = ? "  # optional
-                "group by g.year "
-                "order by g.year",
-                (season, noc_name, medal),
-            ).fetchall()
-        else:  # medal is not specified
-            season, noc_name = valid_input
-            db_results = cursor.execute(
-                "select g.year, count(r.medal) as amount_of_medals "
-                "from results r, athletes a, teams t, games g "
-                "where r.athlete_id = a.id "
-                "and t.id = a.team_id "
-                "and g.id = r.game_id "
-                "and g.season = ? "  # required
-                "and t.noc_name = ? "  # required
-                "group by g.year "
-                "order by g.year",
-                (season, noc_name),
-            ).fetchall()
+        medal = False if len(valid_input) == 2 else True  # checking if medal is specified
+        db_results = cursor.execute(
+            "select g.year, count(r.medal) as amount_of_medals "
+            "from results r, athletes a, teams t, games g "
+            "where r.athlete_id = a.id "
+            "and t.id = a.team_id "
+            "and g.id = r.game_id "
+            "and g.season = ? "  # required
+            "and t.noc_name = ? "  # required
+            f"{'and medal = ? ' if medal else ''}"  # optional
+            "group by g.year "
+            "order by g.year",
+            valid_input,
+        ).fetchall()
+
         return db_results
 
 
