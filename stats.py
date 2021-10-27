@@ -44,8 +44,7 @@ def get_medals_stats() -> List[tuple]:
         season: int = [SEASONS.get(value.lower()) for value in user_query_params if value.lower() in SEASONS][0]
         noc_name: str = [value.upper() for value in user_query_params if value.upper() in _get_all_teams()][0]
         # Validating optional parameters
-        medal = [MEDALS.get(value) for value in user_query_params if value in MEDALS]
-        medal = medal[0] if medal else None
+        medal = next((MEDALS.get(value) for value in user_query_params if value in MEDALS), None)
     except IndexError as index_missing:
         raise BadInput('Both NOC name and season parameters are required, medal is optional.') from index_missing
 
@@ -84,10 +83,8 @@ def get_top_teams_stats() -> List[tuple]:
     except IndexError as missing_index:
         raise BadInput('Incorrect mandatory parameter: season') from missing_index
     # Checking for optional parameters
-    medal = [MEDALS.get(value) for value in user_query_params if value in MEDALS]
-    medal = medal[0] if medal else None
-    year = [int(value) for value in user_query_params if value.isdigit()]
-    year = year[0] if year else None
+    medal = next((MEDALS.get(value) for value in user_query_params if value in MEDALS), None)
+    year = next((int(value) for value in user_query_params if value.isdigit()), None)
 
     valid_params = tuple(filter(lambda x: x if x else False, (season, medal, year)))
 
