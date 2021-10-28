@@ -48,7 +48,7 @@ def get_medals_stats() -> List[tuple]:
     except IndexError as index_missing:
         raise BadInput('Both NOC name and season parameters are required, medal is optional.') from index_missing
 
-    valid_params = tuple(filter(lambda x: x if x else False, (season, noc_name, medal)))
+    valid_params = [param for param in (season, noc_name, medal) if param is not None]
 
     with sqlite3.connect(DATABASE) as conn:
         cursor = conn.cursor()
@@ -60,7 +60,7 @@ def get_medals_stats() -> List[tuple]:
             "and g.id = r.game_id "
             "and g.season = ? "  # required
             "and t.noc_name = ? "  # required
-            f"{'and medal = ? ' if medal else ''}"  # checking if medal is specified
+            f"{'and medal = ? ' if medal is not None else ''}"  # checking if medal is specified
             "group by g.year "
             "order by g.year",
             valid_params,
@@ -75,7 +75,7 @@ def get_top_teams_stats() -> List[tuple]:
     Returns:
         List of tuples, each containing team, amount of medals for it, example [('AUS', 77), ('USA, 76),...]
     """
-    user_query_params = sys.argv[2:]  # Provided by user
+    user_query_params = sys.argv[2:]
     if len(user_query_params) < 1:
         raise BadInput('Missing mandatory parameter: season')
     try:  # Validating mandatory parameter
@@ -86,7 +86,7 @@ def get_top_teams_stats() -> List[tuple]:
     medal = next((MEDALS.get(value) for value in user_query_params if value in MEDALS), None)
     year = next((int(value) for value in user_query_params if value.isdigit()), None)
 
-    valid_params = tuple(filter(lambda x: x if x else False, (season, medal, year)))
+    valid_params = [param for param in (season, medal, year) if param is not None]
 
     with sqlite3.connect(DATABASE) as conn:
         query_results = conn.execute(
@@ -96,8 +96,8 @@ def get_top_teams_stats() -> List[tuple]:
             "and a.id = r.athlete_id "
             "and g.id = r.game_id "
             "and g.season = ? "  # required
-            f"{'and r.medal = ? ' if medal else ''}"
-            f"{'and g.year = ? ' if year else ''}"
+            f"{'and r.medal = ? ' if medal is not None else ''}"
+            f"{'and g.year = ? ' if year is not None else ''}"
             "group by t.noc_name "
             "order by medals_amount desc) "
             "select * "
@@ -114,8 +114,7 @@ def build_chart(query_result: List[tuple]) -> None:
 
     Args:
         query_result: List of tuples returned from the DB after query execution.
-
-        """
+    """
     max_numeric_value = max(query_result, key=lambda x: x[1])[1]
     k = MAX_BAR_LENGTH / max_numeric_value
 
