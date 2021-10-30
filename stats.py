@@ -115,12 +115,14 @@ def build_chart(query_result: List[tuple]) -> None:
     Args:
         query_result: List of tuples returned from the DB after query execution.
     """
-    max_numeric_value = max(query_result, key=lambda x: x[1])[1]
-    k = MAX_BAR_LENGTH / max_numeric_value
-
-    for row in query_result:
-        dimension, metric = row[0], int(row[1])
-        print(dimension, int(round(metric * k)) * BLOCK)
+    try:
+        max_numeric_value = max(query_result, key=lambda x: x[1])[1]
+        k = MAX_BAR_LENGTH / max_numeric_value
+        for row in query_result:
+            dimension, metric = row[0], int(row[1])
+            print(dimension, int(round(metric * k)) * BLOCK)
+    except ValueError:  # will be raised if query_result is empty
+        print('No data is available for a given period.')
 
 
 if __name__ == '__main__':
