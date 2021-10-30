@@ -103,7 +103,7 @@ def get_top_teams_stats() -> List[tuple]:
             "select * "
             "from amount_per_team "
             "where medals_amount > (select avg(medals_amount) from amount_per_team)",
-            valid_params
+            valid_params,
         ).fetchall()
         return query_results
 

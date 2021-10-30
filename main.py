@@ -23,9 +23,7 @@ def load() -> None:
         parsed_events = parsers.parse_events(events)
         parsed_games = parsers.parse_games(games)
         parsed_athletes = parsers.parse_athletes(athletes, parsed_teams)
-        parsed_results = parsers.parse_results(
-            results, parsed_games, parsed_sports, parsed_events
-        )
+        parsed_results = parsers.parse_results(results, parsed_games, parsed_sports, parsed_events)
         with db.connect(DATABASE) as connection:
             db.ingest_games(parsed_games, connection)
             db.ingest_teams(parsed_teams, connection)
